@@ -1,3 +1,14 @@
 fastapi
 pydantic
 uvicorn
+python-multipart
+python-decouple
+sentence-transformers
+langchain
+python-dotenv
+pypdf
+pinecone-client
+ctransformers
+tiktoken
+wikipedia
+langchain-experimental
