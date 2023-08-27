@@ -11,10 +11,13 @@ from fastapi import Form
 from fastapi.middleware.cors import CORSMiddleware
 from langchain import HuggingFaceHub
 from langchain.chains import RetrievalQA
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings, HuggingFaceHubEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.vectorstores import Pinecone
 from typing_extensions import Annotated
+from langchain.agents import Tool
+from langchain.agents import initialize_agent
+# sentence-transformers can not be used because it wont deploy on vercel
 
 load_dotenv()
 
@@ -33,7 +36,7 @@ app.add_middleware(
 async def root():
     return {"message": "Hello World from src/index"}
 
-@app.post("/pinecone/chatbot")
+@app.post("/pinecone/chatbot", status_code=200)
 async def chatbot(
         query: Annotated[str, Form()]
 ):
@@ -45,27 +48,23 @@ async def chatbot(
     modelName = "all-MiniLM-L6-v2"
     #model = getModel(modelName)
 
-    index = getAndCreateIndex(indexName, apiKey, environment, metric, model)
+    index = getAndCreateIndex(indexName, apiKey, environment, metric)
 
     embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2",
-        model_kwargs={'device': 'cpu'})
+         model_name="all-MiniLM-L6-v2"
+    )
+
     text_field = "text"
     vectorstore = Pinecone(
         index, embeddings.embed_query, text_field
     )
-    vectorstore.similarity_search(
-        query,  # our search query
-        k=3  # return 3 most relevant docs
-    )
-    # llm = HuggingFaceInference(
-    #     openai_api_key=openai_api_key,
-    #     model_name='gpt-3.5-turbo',
-    #     temperature=0.0
-    # )
-    #llm = JinaChat(temperature=0)
-    #llm=HuggingFaceHub(repo_id="google/flan-t5-xl", model_kwargs={"temperature":1e-10})
+
     llm=HuggingFaceHub(repo_id="bigscience/bloom", model_kwargs={"temperature":1e-10})
+    #https://python.langchain.com/docs/integrations/llms/huggingface_hub
+    #llm=HuggingFaceHub(repo_id="google/flan-t5-xl", model_kwargs={"temperature":1e-10})
+    #llm=HuggingFaceHub(repo_id="google/flan-ul2", model_kwargs={"temperature":1e-10})
+    #llm=HuggingFaceHub(repo_id="sentence-transformers/all-MiniLM-L6-v2", model_kwargs={"temperature":1e-10})
+    #llm=HuggingFaceHub(repo_id="Xenova/gpt-3.5-turbo", model_kwargs={"temperature":1e-10})
 
     conversational_memory = ConversationBufferWindowMemory(
         memory_key='chat_history',
@@ -77,7 +76,34 @@ async def chatbot(
         chain_type="stuff",
         retriever=vectorstore.as_retriever()
     )
-    qa.run(query)
+    result = qa.run(query)
+    print(result)
+    return {"result": result, "status": 200}
+
+    # tools = [
+    #     Tool(
+    #         name='Knowledge Base',
+    #         func=qa.run,
+    #         description=(
+    #             'use this tool when answering general knowledge queries to get '
+    #             'more information about the topic'
+    #         )
+    #     )
+    # ]
+    #
+    # agent = initialize_agent(
+    #     agent='chat-conversational-react-description',
+    #     tools=tools,
+    #     llm=llm,
+    #     verbose=True,
+    #     max_iterations=3,
+    #     early_stopping_method='generate',
+    #     memory=conversational_memory
+    # )
+    #
+    # result = agent(query)
+    # #print(result)
+    # return result
 
 @app.post("/pinecone/upload/pdf")
 async def create_upload_file(
