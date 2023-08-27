@@ -3,10 +3,20 @@
 import os
 import pathlib
 
+import pinecone
+from decouple import config
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile
 from fastapi import Form
 from fastapi.middleware.cors import CORSMiddleware
+from langchain import HuggingFaceHub
+from langchain.chains import RetrievalQA
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.vectorstores import Pinecone
 from typing_extensions import Annotated
+
+load_dotenv()
 
 DESTINATION = "\\files\\"
 
@@ -28,7 +38,46 @@ async def chatbot(
         query: Annotated[str, Form()]
 ):
     print("Start chat with %s " % f"{query}")
+    apiKey = config('PINECONE_API_KEY')
+    indexName = config('PINECONE_INDEX')
+    environment = config('PINECONE_ENVIRONMENT')
+    metric = "cosine"
+    modelName = "all-MiniLM-L6-v2"
+    #model = getModel(modelName)
 
+    index = getAndCreateIndex(indexName, apiKey, environment, metric, model)
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="all-MiniLM-L6-v2",
+        model_kwargs={'device': 'cpu'})
+    text_field = "text"
+    vectorstore = Pinecone(
+        index, embeddings.embed_query, text_field
+    )
+    vectorstore.similarity_search(
+        query,  # our search query
+        k=3  # return 3 most relevant docs
+    )
+    # llm = HuggingFaceInference(
+    #     openai_api_key=openai_api_key,
+    #     model_name='gpt-3.5-turbo',
+    #     temperature=0.0
+    # )
+    #llm = JinaChat(temperature=0)
+    #llm=HuggingFaceHub(repo_id="google/flan-t5-xl", model_kwargs={"temperature":1e-10})
+    llm=HuggingFaceHub(repo_id="bigscience/bloom", model_kwargs={"temperature":1e-10})
+
+    conversational_memory = ConversationBufferWindowMemory(
+        memory_key='chat_history',
+        k=5,
+        return_messages=True
+    )
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=vectorstore.as_retriever()
+    )
+    qa.run(query)
 
 @app.post("/pinecone/upload/pdf")
 async def create_upload_file(
@@ -52,3 +101,59 @@ async def create_upload_file(
         file_object.write(file.file.read())
 
     return {"filename": file.filename}
+
+
+def getAndCreateIndex(indexName:str, apiKey:str, environment:str, metric:str):
+
+    # for now always delete the index
+    #if indexName in pinecone.list_indexes():
+    #    pinecone.delete_index(indexName)
+    # print("Using index %s " % f"{indexName}")
+    # print("Using apiKey %s " % f"{apiKey}")
+    # print("Using environment %s " % f"{environment}")
+    # print("Using metric %s " % f"{metric}")
+
+    pinecone.init(
+        api_key=apiKey,  # find at app.pinecone.io
+        environment=environment # next to api key in console
+    )
+
+    if indexName not in pinecone.list_indexes():
+        pinecone.create_index(
+            name=indexName,
+            dimension=384,
+            metric=metric
+        )
+
+    # now connect to the index
+    #return pinecone.GRPCIndex(indexName)
+    #
+    return pinecone.Index(indexName)
+
+# def getModel(modelname):
+#     if 'all-MiniLM-L6-v2' == modelname:
+#         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         if device != 'cuda':
+#             print(f"You are using {device}. This is much slower than using "
+#                   "a CUDA-enabled GPU. If on Colab you can change this by "
+#                   "clicking Runtime > Change runtime type > GPU.")
+#         return SentenceTransformer(modelname, device=device)
+#     elif 'average_word_embeddings_komninos' == modelname:
+#         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         return SentenceTransformer(modelname, device=device)
+#     elif 'multi-qa-MiniLM-L6-cos-v1' == modelname:
+#         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         # load the retriever model from huggingface model hub
+#         return SentenceTransformer(modelname, device=device)
+#     elif 'bert-base-nli-mean-tokens' == modelname:
+#         return SentenceTransformer('sentence-transformers/bert-base-nli-mean-tokens')
+#     elif 'all_datasets_v3_mpnet-base' == modelname:
+#         return SentenceTransformer('flax-sentence-embeddings/all_datasets_v3_mpnet-base')
+#     elif 'paraphrase-MiniLM-L6-v2' == modelname:
+#         return SentenceTransformer(modelname)
+#     elif 'all-mpnet-base-v2' == modelname:
+#         return SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+#     elif 'average_word_embeddings_glove.6B.300d' == modelname:
+#         return SentenceTransformer(modelname)
+#     else:
+#         raise Exception("Unknown model: " + modelname)

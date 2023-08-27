@@ -3,8 +3,6 @@ pydantic
 uvicorn
 python-multipart
 python-decouple
-sentence-transformers
 langchain
 python-dotenv
-pypdf
 pinecone-client
