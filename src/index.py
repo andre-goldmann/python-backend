@@ -23,6 +23,13 @@ app.add_middleware(
 async def root():
     return {"message": "Hello World from src/index"}
 
+@app.post("/pinecone/chatbot")
+async def chatbot(
+        query: Annotated[str, Form()]
+):
+    print("Start chat with %s " % f"{query}")
+
+
 @app.post("/pinecone/upload/pdf")
 async def create_upload_file(
         file: Annotated[UploadFile, File(description="A file read as UploadFile")],
