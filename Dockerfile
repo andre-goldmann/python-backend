@@ -1,5 +1,5 @@
 FROM jrottenberg/ffmpeg
-FROM python:3.11-alpine
+FROM python:3.11
 
 # thats working but so it does not start the server
 #RUN mkdir /home/soulsaver
