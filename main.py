@@ -1,5 +1,4 @@
 # Funktioniert mit lokalem start night
-#from src.dtos.ISayHelloDto import ISayHelloDto
 import os
 import pathlib
 from fastapi import FastAPI, WebSocket
