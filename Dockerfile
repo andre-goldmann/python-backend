@@ -1,11 +1,12 @@
 FROM jrottenberg/ffmpeg
+# keep 3.9 as there are problems with pydantic
 FROM python:3.9
 
-RUN mkdir /home/soulsaver
-RUN chmod -R 777 /home/soulsaver
-RUN groupadd -r soulsaver && useradd -r -g soulsaver soulsaver
-USER soulsaver
-
+# thats working but so it does not start the server
+#RUN mkdir /home/soulsaver
+#RUN chmod -R 777 /home/soulsaver
+#RUN groupadd -r soulsaver && useradd -r -g soulsaver soulsaver
+#USER soulsaver
 
 WORKDIR /code
 
