@@ -1,6 +1,5 @@
 FROM jrottenberg/ffmpeg
-# keep 3.9 as there are problems with pydantic
-FROM python:3.9
+FROM python:3.11-alpine
 
 # thats working but so it does not start the server
 #RUN mkdir /home/soulsaver
