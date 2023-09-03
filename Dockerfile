@@ -1,10 +1,10 @@
 FROM jrottenberg/ffmpeg
 FROM python:3.11
 
-RUN groupadd -r soulsaver && useradd -r -g soulsaver soulsaver
-USER soulsaver
-RUN mkdir /home/soulsaver
-RUN chmod -R 777 /home/soulsaver
+#RUN groupadd -r soulsaver && useradd -r -g soulsaver soulsaver
+#USER soulsaver
+#RUN mkdir /home/soulsaver
+#RUN chmod -R 777 /home/soulsaver
 
 WORKDIR /code
 
