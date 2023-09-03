@@ -11,3 +11,4 @@ openai-whisper
 ctransformers
 websockets
 ffmpeg-python
+pandas
