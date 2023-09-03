@@ -14,7 +14,7 @@ from langchain.chains import RetrievalQA
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Pinecone
 from typing_extensions import Annotated
-from ctransformers.langchain import CTransformers
+#from ctransformers.langchain import CTransformers
 from pytube import YouTube
 import os
 import torch
@@ -63,12 +63,13 @@ def setCustomPrompt():
 
 def load_llm():
 
-    llm = CTransformers(model="llama-2-7b.ggmlv3.q2_K.bin", model_type="llama", max_new_tokens=512, temperature=0.5)
+    #compiler error
+    #llm = CTransformers(model="llama-2-7b.ggmlv3.q2_K.bin", model_type="llama", max_new_tokens=512, temperature=0.5)
     #llm = CTransformers(model="meta-llama/Llama-2-7b-chat-hf", model_type="llama", max_new_tokens=512, temperature=0.5)
     # does not work
     #llm = AutoModelForCausalLM.from_pretrained('marella/gpt-2-ggml')
 
-    return llm
+    return {}
 
 def retrieval_qa_chain(llm, prompt, db):
     print("")
