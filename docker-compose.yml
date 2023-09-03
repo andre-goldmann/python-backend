@@ -1,0 +1,10 @@
+version: '3.5'
+
+services:
+  web:
+    container_name: backend
+    build: ./
+    ports:
+      - "6081:6081"
+    #env_file:
+    #  - .env

@@ -6,3 +6,8 @@ python-decouple
 langchain
 python-dotenv
 pinecone-client
+pytube
+openai-whisper
+ctransformers
+websockets
+ffmpeg-python
