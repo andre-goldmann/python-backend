@@ -4,6 +4,8 @@ FROM python:3.11
 RUN groupadd -r soulsaver && useradd -r -g soulsaver soulsaver
 USER soulsaver
 
+RUN chmod -R 777 /home/soulsaver
+
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt
